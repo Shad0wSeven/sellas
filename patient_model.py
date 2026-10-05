@@ -39,6 +39,9 @@ PARAMS = [
     ("gamma", 1.4, 2.8, "u", 0, 0), ("delta", 0.0, 2.5, "e", 1.0, 0), ("q_rw", 0.0, 1.0, "n", 0.5, 0.2),
     ("z_b", 2.2, 3.0, "n", 2.4, 0.15), ("h_f", 0.74, 0.92, "u", 0, 0),
 ]
+import os, json
+_ov = json.loads(os.environ.get("PM_OVERRIDE", "{}"))           # e.g. {"lth_r": [-1.9, 0.6]} overrides prior (a, b) for sensitivity runs
+PARAMS = [(n, lo, hi, k, *_ov.get(n, (a, b))) for (n, lo, hi, k, a, b) in PARAMS]
 NAMES = [p[0] for p in PARAMS]; IDX = {n: i for i, n in enumerate(NAMES)}; D = len(PARAMS)
 LO = np.array([p[1] for p in PARAMS]); HI = np.array([p[2] for p in PARAMS])
 KIND = [p[3] for p in PARAMS]; PA = np.array([p[4] for p in PARAMS], float); PB = np.array([p[5] for p in PARAMS], float)
