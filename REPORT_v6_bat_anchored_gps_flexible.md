@@ -17,7 +17,7 @@ Data movement (mean shift in prior SDs, posterior SD / prior SD): with BAT ancho
 
 ## Reading it
 
-- Conditional on BAT matching the literature, the counts require GPS to be at or near its ceiling: about 85-95% of patients durable (responder and durable), GPS 3-yr OS about 0.52-0.57, onset about 1.5-2.5 months. With Phase 2-centred priors the posterior still lands at responders 0.85 and durable-among-responders 0.94.
-- That is well above what Phase 2 shows (3-yr OS 47% in CR1, 64% any immune response), so the model is telling you *what GPS would have to be* if the BAT literature is right: P(success) is high (about 0.77-0.94) only because GPS is forced to near-cure. If BAT is instead anchored at the higher Kugler-type reading (3-yr OS 27%), GPS needs less and P(success) falls to 0.59-0.71.
+- Conditional on BAT matching the literature, the counts require GPS to be at or near its ceiling: about 70-90% of GPS patients durable (responder and durable), GPS 3-yr OS about 0.52-0.57, onset about 1.5-2.5 months. With Phase 2-centred priors the posterior still lands at responders 0.85 and durable-among-responders 0.94.
+- That is well above what Phase 2 shows (3-yr OS 47% in CR1, 64% any immune response), so the model is telling you *what GPS would have to be* if the BAT literature is right: P(success) is high (about 0.71-0.94) only because GPS is forced to near-cure. If BAT is instead anchored at the higher Kugler-type reading (3-yr OS 27%), GPS needs less and P(success) falls to 0.59-0.71 (0.59 with Phase 2-centred GPS priors).
 - P(success) therefore depends on the BAT anchor (centre and width) far more than on anything else: 0.59 to 0.94 across anchors.
 - The posterior piles up against the upper bounds of `p_resp` and `f_dur`; read those as lower bounds on what is needed, not as estimates.
