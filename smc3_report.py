@@ -10,7 +10,7 @@ fm = lambda a, d=3: f"{a[1]:.{d}g} [{a[0]:.{d}g}, {a[2]:.{d}g}]"
 disp = {"Mr": "median relapse-free time, reference pt (mo)", "kr": "relapse hazard shape", "c_b": "never-relapse fraction", "b_long": "log HR long CR1", "b_poor": "log HR poor cytogenetics",
         "b_mrd": "log HR MRD+", "b_age": "log HR per 10 y age", "sig_f": "frailty SD", "p_long": "share long CR1", "p_poor": "share poor cytogenetics", "p_mrd": "share MRD+",
         "u_mean": "CR2->randomisation delay (mo)", "m_p": "post-relapse median (mo)", "b_prage": "log HR post-relapse per 10 y", "m_bg": "background mortality multiplier", "p_sct": "transplant fraction (ITT)",
-        "p_act": "BAT on active therapy", "th_B": "relapse HR, BAT active vs observation", "p_resp": "GPS immune-responder fraction", "lth_r": "log relapse HR, GPS responders after onset",
+        "p_act": "BAT on active therapy", "th_B": "relapse HR, BAT active vs observation", "p_resp": "GPS immune-responder fraction", "f_dur": "fraction of responders with durable (cure-like) effect", "lth_r": "log relapse HR, GPS responders after onset",
         "th_nr": "relapse HR, GPS non-responders vs observation", "lL": "log onset delay (median mo = exp)", "gamma": "enrollment shape", "z_b": "interim efficacy z bound", "h_f": "interim futility HR bound"}
 
 def trial_weights(rel, sigma=2.0):
@@ -43,7 +43,9 @@ for tag, (d, Th, pw) in summ.items():
     print(f"  HR all trials {fm(d['HR_all'])}  P(succ) {d['P_succ_all']:.3f} | given counts & IA: HR {fm(d['HR_cond'])}  P(HR<.636) {d['P_HRlt636_cond']:.3f}  P(success) {d['P_succ_cond']:.3f} (ESS {d['ESS_w']:.0f}) | given counts only: HR {fm(d['HR_cond_counts_only'])} P(succ) {d['P_succ_cond_counts_only']:.3f}")
 
 # parameter table for run A
-d, Th, pw = summ["A_tau1_softIA"]; fit = runs["A_tau1_softIA"]["fit"]
+import os
+KEY = os.environ.get("PM_REPORT_RUN", "L0_lean")
+d, Th, pw = summ[KEY]; fit = runs[KEY]["fit"]
 rows = []
 for j, n in enumerate(pm.NAMES):
     pr = q(Xp[:, j]); po = q(fit["X"][:, j]); pa = r.wq(Th[:, j], pw + 1e-12, [.05, .5, .95])
@@ -51,6 +53,6 @@ for j, n in enumerate(pm.NAMES):
     rows.append([n, disp[n], fm(tr(pr)), fm(tr(po)), fm(tr(pa)), round(float((po[1] - pr[1]) / (pr[2] - pr[0]) * 3.29), 2)])
 with open("results_v2/smc3_params.csv", "w", newline="") as f:
     wr = csv.writer(f); wr.writerow(["param", "meaning", "prior median [5,95]", "calibrated posterior", "after trial-level conditioning (counts+IA)", "shift (prior SDs)"]); wr.writerows(rows)
-print("\nPARAMETERS (run A) — prior vs posterior")
+print(f"\nPARAMETERS (run {KEY}) — prior vs posterior")
 for rw in rows: print(f"  {rw[0]:8s} {rw[1][:46]:46s} prior {rw[2]:24s} post {rw[4]:24s} shift {rw[5]:+.2f}")
 pickle.dump({k: v for k, v in summ.items()}, open("results_v2/smc3_summ.pkl", "wb"))

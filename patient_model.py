@@ -34,7 +34,7 @@ PARAMS = [
     ("u_mean", 1.0, 4.0, "n", 2.5, 0.8), ("m_p", 3.5, 8.0, "n", 5.5, 1.0), ("b_prage", -0.1, 0.5, "n", np.log(1.15), 0.1),
     ("m_bg", 0.8, 3.0, "n", 1.5, 0.4), ("p_sct", 0.02, 0.25, "n", 0.10, 0.04),
     ("p_act", 0.4, 0.95, "n", 0.75, 0.10), ("th_B", 0.4, 1.1, "n", 0.75, 0.15),
-    ("p_resp", 0.35, 0.95, "n", 0.70, 0.10), ("lth_r", np.log(0.03), 0.0, "n", np.log(0.4), 0.6),
+    ("p_resp", 0.35, 0.95, "n", 0.70, 0.10), ("f_dur", 0.05, 1.0, "n", 0.55, 0.20), ("lth_r", np.log(0.03), 0.0, "n", np.log(0.4), 0.6),
     ("th_nr", 0.7, 1.4, "n", 1.0, 0.15), ("lL", 0.0, np.log(8.0), "n", np.log(3.0), 0.3),
     ("gamma", 1.4, 2.8, "u", 0, 0), ("delta", 0.0, 2.5, "e", 1.0, 0), ("q_rw", 0.0, 1.0, "n", 0.5, 0.2),
     ("z_b", 2.2, 3.0, "n", 2.4, 0.15), ("h_f", 0.74, 0.92, "u", 0, 0),
@@ -42,9 +42,17 @@ PARAMS = [
 import os, json
 LAG = dict(mu_bat=0.0, sd_bat=0.0, mu_gps=0.0, sd_gps=0.0)       # reporting lag in DAYS added to the biological death date: N(mu, sd), clipped at 0
 LAG.update(json.loads(os.environ.get("PM_LAG", "{}")))
-_ov = json.loads(os.environ.get("PM_OVERRIDE", "{}"))           # e.g. {"lth_r": [-1.9, 0.6]} overrides prior (a, b) for sensitivity runs
+MODE = os.environ.get("PM_MODE", "lean")            # "lean": GPS = durable-responder mixture, nuisance parameters fixed; "full": earlier 25-parameter version
+TH_DUR = 0.05                                        # durable responders keep a 5% residual relapse hazard (leak)
+FIXED = {}
+if MODE == "lean":
+    FIXED = dict(p_long=0.45, p_poor=0.30, p_mrd=0.40, b_poor=float(np.log(1.6)), b_mrd=float(np.log(1.4)), b_age=float(np.log(1.1)), b_prage=float(np.log(1.15)),
+                 u_mean=2.5, m_bg=1.5, p_sct=0.10, p_act=0.75)
+_ov = {"c_b": (0.06, 0.03)} if MODE == "lean" else {}
+_ov.update(json.loads(os.environ.get("PM_OVERRIDE", "{}")))           # e.g. {"lth_r": [-1.9, 0.6]} overrides prior (a, b) for sensitivity runs
 PARAMS = [(n, lo, hi, k, *_ov.get(n, (a, b))) for (n, lo, hi, k, a, b) in PARAMS]
-PARAMS = [p for p in PARAMS if p[0] not in ("q_rw", "delta")]      # no reporting nuisance parameters: lag is an explicit input (LAG)
+_drop = {"q_rw", "delta"} | (set(FIXED) | {"lth_r", "th_nr"} if MODE == "lean" else {"f_dur"})
+PARAMS = [p for p in PARAMS if p[0] not in _drop]      # no reporting nuisance parameters: lag is an explicit input (LAG)
 NAMES = [p[0] for p in PARAMS]; IDX = {n: i for i, n in enumerate(NAMES)}; D = len(PARAMS)
 LO = np.array([p[1] for p in PARAMS]); HI = np.array([p[2] for p in PARAMS])
 KIND = [p[3] for p in PARAMS]; PA = np.array([p[4] for p in PARAMS], float); PB = np.array([p[5] for p in PARAMS], float)
@@ -79,7 +87,7 @@ def sample_prior(n, rng):
 def make_Z(R, seed=2024):
     rng = np.random.default_rng(seed); sh = (R, N)
     keys = ["u_long", "u_poor", "u_mrd", "z_age", "u_del", "z_f", "E_rel", "u_cure", "E_rem", "E_pr", "u_sct", "E_tsct", "E_post",
-            "u_act", "u_resp", "z_L", "u_imm", "u_disc", "key", "jit"]
+            "u_act", "u_resp", "u_dur", "z_L", "u_imm", "u_disc", "key", "jit"]
     Z = {k: rng.random(sh) for k in keys}
     for k in ("z_age", "z_f", "z_L", "pipe"): Z[k] = rng.standard_normal(sh)
     for k in ("E_rel", "E_rem", "E_pr", "E_tsct", "E_post"): Z[k] = rng.exponential(1.0, sh)
@@ -98,7 +106,7 @@ def enroll_base(gamma):
 
 def sim_block(X, Z):
     """X (nb,D). returns dict of arrays (nb,R,N): a, arm, T, d, arrive, relapsed, ... (all months)"""
-    nb = len(X); P = {n: X[:, i][:, None, None] for n, i in IDX.items()}
+    nb = len(X); P = {n: X[:, i][:, None, None] for n, i in IDX.items()}; P.update(FIXED)
     ex = lambda k: Z[k][None]
     long_ = ex("u_long") < P["p_long"]; poor = ex("u_poor") < P["p_poor"]; mrd = ex("u_mrd") < P["p_mrd"]
     age = np.clip(66 + 9 * ex("z_age"), 30, 88)
@@ -118,14 +126,18 @@ def sim_block(X, Z):
                   + P["b_age"] * (age - 66) / 10 + P["sig_f"] * ex("z_f"))
     active = (~arm) & (ex("u_act") < P["p_act"])
     resp = arm & (ex("u_resp") < P["p_resp"])
-    mult = mult * np.where(active, P["th_B"], 1.0) * np.where(arm & ~resp, P["th_nr"], 1.0)
+    if MODE == "lean":                       # GPS: immune responder -> durable (cure-like, residual hazard TH_DUR) with prob f_dur; everyone else behaves like observation
+        eff = resp & (ex("u_dur") < P["f_dur"]); th_r = TH_DUR
+        mult = mult * np.where(active, P["th_B"], 1.0)
+    else:
+        eff = resp; th_r = np.exp(P["lth_r"])
+        mult = mult * np.where(active, P["th_B"], 1.0) * np.where(arm & ~resp, P["th_nr"], 1.0)
     E_tot = mult * H0(u) + ex("E_rel")                                                 # conditional on relapse-free at entry
     Lp = np.exp(P["lL"] + 0.4 * ex("z_L")); b = u + Lp
-    th_r = np.exp(P["lth_r"])
     Hb = H0(b)
     t_plain = H0inv(E_tot / mult)
     t_resp = np.where(E_tot / mult < Hb, t_plain, H0inv(Hb + (E_tot / mult - Hb) / th_r))
-    t_cr2 = np.where(resp, t_resp, t_plain)
+    t_cr2 = np.where(eff, t_resp, t_plain)
     t_cr2 = np.where(ex("u_cure") < P["c_b"], np.inf, t_cr2)
     R_ = t_cr2 - u                                                                     # relapse time from randomisation
     h_rem = H65 * np.exp(0.09 * (age - 65)) * P["m_bg"]
@@ -144,7 +156,9 @@ def sim_block(X, Z):
     lag_days = np.where(arm, LAG["mu_gps"] + LAG["sd_gps"] * ex("pipe"), LAG["mu_bat"] + LAG["sd_bat"] * ex("pipe"))
     arrive = d + np.maximum(lag_days, 0.0) / 30.4375
     interval = np.where(T < 36, 3.0, 12.0)
-    return dict(a=a, arm=arm, T=T, d=d, arrive=arrive, relapsed=relapsed_by_death, resp=resp, active=active, sct=sct_done, age=np.broadcast_to(age, T.shape), long=np.broadcast_to(long_, T.shape), interval=interval, u=u, R=R_)
+    bt = lambda x: np.broadcast_to(x, T.shape)
+    return dict(a=bt(a), arm=bt(arm), T=T, d=bt(d), arrive=bt(arrive), relapsed=bt(relapsed_by_death), resp=bt(resp), active=bt(active), sct=bt(sct_done),
+                age=bt(age), long=bt(long_), interval=bt(interval), u=bt(u), R=bt(R_))
 
 
 def summarize_block(X, Z):

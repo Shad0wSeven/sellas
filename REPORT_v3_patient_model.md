@@ -74,3 +74,16 @@ BAT median OS in the posterior is about 17–18 months and GPS about 26–31 mon
 ## 6. Caveats
 
 BAT 3-yr OS of 30% in the posterior is above the VDM-bridge range (13–22%); the model reaches it only because the counts demand survivors, so it is a signal that either BAT is stronger than the literature or GPS is stronger than Phase 2. Several covariate HRs, the life-table hazard and the transplant fraction are my assumptions or unverified. The model has no explicit HLA split, one onset-delay distribution, and the SAP is assumed unstratified log-rank.
+
+## 7. Lean version (default): GPS carries a tail, 13 free parameters
+
+GPS is now a durable-responder mixture (immune response `p_resp`, durable fraction `f_dur`, onset delay), and nuisance parameters with solid literature values are fixed (see `INPUTS.md`). The prior-predictive BAT arm matches the literature: median 13.4 mo, 1-yr OS 54%, 3-yr OS 16%.
+
+| Run | Expected counts | BAT 3-yr OS (median) | GPS 3-yr OS (median) | HR given counts & interim | P(success) |
+|---|---|---|---|---|---|
+| L0 base (f_dur ~ N(0.55, 0.2)) | 58.8 / 74.0 / 77.5 | 33% (19.8 mo) | 48% (31.5 mo) | 0.65 (0.48–0.84) | 46% |
+| L1 wide f_dur prior | 58.8 / 73.9 / 77.4 | 32% (19.1) | 49% (33.8) | 0.62 (0.47–0.82) | 54% |
+| L2 no interim term | 58.8 / 74.0 / 77.5 | 34% (20.3) | 47% (30.2) | 0.66 | 42% |
+| L3 tolerance 0.5 events | 59.4 / 73.6 / 77.0 | 33% (19.5) | 49% (33.1) | 0.64 | 48% |
+
+The posterior moves GPS toward a large durable component: responders 77%, durable among responders 82% (about 63% of GPS patients), onset about 11 months (median `exp(2.44)`). Both arms keep tails (BAT 3→5-yr OS 34→23%, GPS 47→39%). BAT 3-yr OS stays near 33%, above the literature range, because the counts still demand about 38% alive.
