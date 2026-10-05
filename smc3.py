@@ -19,9 +19,11 @@ PIN = json.loads(os.environ.get("PM_PIN", "{}"))        # e.g. {"bat36": [0.19, 
 
 
 def loglike(ev, tau, w_ia, w_stall=1.0):
-    mu, pst, fu, pc, pe, pf, bat36, gps36 = ev
+    mu, pst, fu, pc, pe, pf, bat36, gps36, bat12, bat24 = ev
     pin = 0.0
     if "bat36" in PIN: pin = pin - 0.5 * ((bat36 - PIN["bat36"][0]) / PIN["bat36"][1]) ** 2
+    if "bat12" in PIN: pin = pin - 0.5 * ((bat12 - PIN["bat12"][0]) / PIN["bat12"][1]) ** 2
+    if "bat24" in PIN: pin = pin - 0.5 * ((bat24 - PIN["bat24"][0]) / PIN["bat24"][1]) ** 2
     if "gps36" in PIN: pin = pin - 0.5 * ((gps36 - PIN["gps36"][0]) / PIN["gps36"][1]) ** 2
     return (pin - 0.5 * (((OBS[None] - mu) / tau) ** 2).sum(1) + w_stall * np.log(np.clip(pst, 0.05, 1.0)) + w_ia * np.log(np.clip(pc, 0.02, 1.0)))
 
@@ -66,15 +68,15 @@ def smc(tau=1.0, w_ia=1.0, N=2000, R=120, seed=1, workers=8, verbose=True):
             C = np.cov(X.T) * (2.38 ** 2 / pm.D) * scale
             prop = reflect(X + rng.multivariate_normal(np.zeros(pm.D), C + 1e-10 * np.eye(pm.D), size=N))
             lpp = pm.log_prior(prop); ok = np.isfinite(lpp)
-            evp = [np.zeros((N, 3))] + [np.zeros(N) for _ in range(7)]
+            evp = [np.zeros((N, 3))] + [np.zeros(N) for _ in range(9)]
             if ok.any():
                 e_ = E(prop[ok])
-                for k in range(8): evp[k][ok] = e_[k]
+                for k in range(10): evp[k][ok] = e_[k]
             llp = np.where(ok, loglike(evp, tau, w_ia), -np.inf)
             la = (lpp + beta * llp) - (lp + beta * ll)
             acc = np.log(rng.random(N)) < np.where(np.isfinite(la), la, -np.inf)
             X[acc], lp[acc], ll[acc] = prop[acc], lpp[acc], llp[acc]
-            for k in range(8): ev[k][acc] = evp[k][acc]
+            for k in range(10): ev[k][acc] = evp[k][acc]
             acc_tot += acc.mean()
         ar = acc_tot / 3; scale *= 1.3 if ar > 0.30 else (0.7 if ar < 0.12 else 1.0)
         snap(stage)

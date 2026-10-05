@@ -50,7 +50,11 @@ if MODE == "lean":
                  u_mean=2.5, m_bg=1.5, p_sct=0.10, p_act=0.75)
 _ov = {"c_b": (0.06, 0.03)} if MODE == "lean" else {}
 _ov.update(json.loads(os.environ.get("PM_OVERRIDE", "{}")))           # e.g. {"lth_r": [-1.9, 0.6]} overrides prior (a, b) for sensitivity runs
-PARAMS = [(n, lo, hi, k, *_ov.get(n, (a, b))) for (n, lo, hi, k, a, b) in PARAMS]
+def _apply(n, lo, hi, k, a, b):
+    o = _ov.get(n)
+    if o is None: return (n, lo, hi, k, a, b)
+    return (n, o[2] if len(o) > 2 else lo, o[3] if len(o) > 3 else hi, k, o[0], o[1])
+PARAMS = [_apply(*p) for p in PARAMS]
 _drop = {"q_rw", "delta"} | (set(FIXED) | {"lth_r", "th_nr"} if MODE == "lean" else {"f_dur"})
 PARAMS = [p for p in PARAMS if p[0] not in _drop]      # no reporting nuisance parameters: lag is an explicit input (LAG)
 NAMES = [p[0] for p in PARAMS]; IDX = {n: i for i, n in enumerate(NAMES)}; D = len(PARAMS)
@@ -177,8 +181,9 @@ def summarize_block(X, Z):
     cont = (z_eff < X[:, IDX["z_b"]][:, None]) & (hr <= X[:, IDX["h_f"]][:, None])
     p_eff_stop = (z_eff >= X[:, IDX["z_b"]][:, None]).mean(1); p_fut_stop = (hr > X[:, IDX["h_f"]][:, None]).mean(1)
     armb = s["arm"]; Tt = s["T"]
-    bat36 = np.array([(Tt[i][~armb[i]] > 36).mean() for i in range(nb)]); gps36 = np.array([(Tt[i][armb[i]] > 36).mean() for i in range(nb)])
-    return mu, pst, fu, cont.mean(1), p_eff_stop, p_fut_stop, bat36, gps36
+    sv = lambda t, m: np.array([(Tt[i][m[i]] > t).mean() for i in range(nb)])
+    bat36, gps36 = sv(36, ~armb), sv(36, armb); bat12, bat24 = sv(12, ~armb), sv(24, ~armb)
+    return mu, pst, fu, cont.mean(1), p_eff_stop, p_fut_stop, bat36, gps36, bat12, bat24
 
 
 # ---- parallel evaluation
@@ -188,7 +193,7 @@ def _init(R, seed):
 
 def _work(Xc):
     out = [summarize_block(Xc[i:i + 40], _Z) for i in range(0, len(Xc), 40)]
-    return [np.concatenate([o[k] for o in out]) for k in range(8)]
+    return [np.concatenate([o[k] for o in out]) for k in range(10)]
 
 class Evaluator:
     def __init__(self, R=120, seed=2024, workers=8):
@@ -197,5 +202,5 @@ class Evaluator:
     def __call__(self, X):
         chunks = np.array_split(X, self.workers * 3)
         res = list(self.pool.map(_work, [c for c in chunks if len(c)]))
-        return [np.concatenate([q[k] for q in res]) for k in range(8)]
+        return [np.concatenate([q[k] for q in res]) for k in range(10)]
     def close(self): self.pool.shutdown()
