@@ -176,7 +176,9 @@ def summarize_block(X, Z):
     z_eff = -z.reshape(nb, R); hr = np.exp(beta.reshape(nb, R))
     cont = (z_eff < X[:, IDX["z_b"]][:, None]) & (hr <= X[:, IDX["h_f"]][:, None])
     p_eff_stop = (z_eff >= X[:, IDX["z_b"]][:, None]).mean(1); p_fut_stop = (hr > X[:, IDX["h_f"]][:, None]).mean(1)
-    return mu, pst, fu, cont.mean(1), p_eff_stop, p_fut_stop
+    armb = s["arm"]; Tt = s["T"]
+    bat36 = np.array([(Tt[i][~armb[i]] > 36).mean() for i in range(nb)]); gps36 = np.array([(Tt[i][armb[i]] > 36).mean() for i in range(nb)])
+    return mu, pst, fu, cont.mean(1), p_eff_stop, p_fut_stop, bat36, gps36
 
 
 # ---- parallel evaluation
@@ -186,7 +188,7 @@ def _init(R, seed):
 
 def _work(Xc):
     out = [summarize_block(Xc[i:i + 40], _Z) for i in range(0, len(Xc), 40)]
-    return [np.concatenate([o[k] for o in out]) for k in range(6)]
+    return [np.concatenate([o[k] for o in out]) for k in range(8)]
 
 class Evaluator:
     def __init__(self, R=120, seed=2024, workers=8):
@@ -195,5 +197,5 @@ class Evaluator:
     def __call__(self, X):
         chunks = np.array_split(X, self.workers * 3)
         res = list(self.pool.map(_work, [c for c in chunks if len(c)]))
-        return [np.concatenate([q[k] for q in res]) for k in range(6)]
+        return [np.concatenate([q[k] for q in res]) for k in range(8)]
     def close(self): self.pool.shutdown()

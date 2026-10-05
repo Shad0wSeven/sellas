@@ -14,9 +14,16 @@ OBS = np.array([60.0, 72.0, 78.0])
 IDX = pm.IDX
 
 
+import os, json
+PIN = json.loads(os.environ.get("PM_PIN", "{}"))        # e.g. {"bat36": [0.19, 0.04]} adds a soft literature pin on population BAT 3-yr OS
+
+
 def loglike(ev, tau, w_ia, w_stall=1.0):
-    mu, pst, fu, pc, pe, pf = ev
-    return (-0.5 * (((OBS[None] - mu) / tau) ** 2).sum(1) + w_stall * np.log(np.clip(pst, 0.05, 1.0)) + w_ia * np.log(np.clip(pc, 0.02, 1.0)))
+    mu, pst, fu, pc, pe, pf, bat36, gps36 = ev
+    pin = 0.0
+    if "bat36" in PIN: pin = pin - 0.5 * ((bat36 - PIN["bat36"][0]) / PIN["bat36"][1]) ** 2
+    if "gps36" in PIN: pin = pin - 0.5 * ((gps36 - PIN["gps36"][0]) / PIN["gps36"][1]) ** 2
+    return (pin - 0.5 * (((OBS[None] - mu) / tau) ** 2).sum(1) + w_stall * np.log(np.clip(pst, 0.05, 1.0)) + w_ia * np.log(np.clip(pc, 0.02, 1.0)))
 
 
 def ess_of(w): return w.sum() ** 2 / (w ** 2).sum()
@@ -59,15 +66,15 @@ def smc(tau=1.0, w_ia=1.0, N=2000, R=120, seed=1, workers=8, verbose=True):
             C = np.cov(X.T) * (2.38 ** 2 / pm.D) * scale
             prop = reflect(X + rng.multivariate_normal(np.zeros(pm.D), C + 1e-10 * np.eye(pm.D), size=N))
             lpp = pm.log_prior(prop); ok = np.isfinite(lpp)
-            evp = [np.zeros((N, 3)), np.zeros(N), np.zeros(N), np.zeros(N), np.zeros(N), np.zeros(N)]
+            evp = [np.zeros((N, 3))] + [np.zeros(N) for _ in range(7)]
             if ok.any():
                 e_ = E(prop[ok])
-                for k in range(6): evp[k][ok] = e_[k]
+                for k in range(8): evp[k][ok] = e_[k]
             llp = np.where(ok, loglike(evp, tau, w_ia), -np.inf)
             la = (lpp + beta * llp) - (lp + beta * ll)
             acc = np.log(rng.random(N)) < np.where(np.isfinite(la), la, -np.inf)
             X[acc], lp[acc], ll[acc] = prop[acc], lpp[acc], llp[acc]
-            for k in range(6): ev[k][acc] = evp[k][acc]
+            for k in range(8): ev[k][acc] = evp[k][acc]
             acc_tot += acc.mean()
         ar = acc_tot / 3; scale *= 1.3 if ar > 0.30 else (0.7 if ar < 0.12 else 1.0)
         snap(stage)
@@ -102,7 +109,12 @@ def realised(X, R2=100, nsel=800, seed=99):
                 pop[f"{nm}_S{t}"] = np.array([np.mean(Tr[i][msk[i]] > t) for i in range(nb)])
             pop[f"{nm}_med"] = np.array([np.median(Tr[i][msk[i]]) for i in range(nb)])
             rel = np.where(S["relapsed"] | True, 1, 0)
-        recs.append(dict(C=C, hr=np.exp(lc), z=zc, nev=nev, z_ia=zi, hr_ia=np.exp(li), ia_cont=ia_cont, stall=stall,
+        pophr = np.zeros(nb)
+        for i in range(nb):
+            tm = np.clip(np.minimum(S["T"][i], r.D["q2"] - S["a"][i]), 0.01, None).reshape(1, -1)
+            ev_ = (S["d"][i] <= r.D["q2"]).reshape(1, -1).astype(np.int8)
+            pophr[i] = np.exp(r.logrank(tm, ev_, S["arm"][i].reshape(1, -1).astype(np.int8))[1][0])
+        recs.append(dict(pop_hr=np.repeat(pophr, R2), C=C, hr=np.exp(lc), z=zc, nev=nev, z_ia=zi, hr_ia=np.exp(li), ia_cont=ia_cont, stall=stall,
                          part=np.repeat(np.arange(s, s + nb), R2), pop_idx=np.arange(s, s + nb), **{f"pop_{k}": v_ for k, v_ in pop.items()},
                          sct=flat(S["sct"]).mean(1), relapsed=flat(S["relapsed"]).mean(1), age=flat(S["age"]).mean(1), longf=flat(S["long"]).mean(1)))
     out = {}

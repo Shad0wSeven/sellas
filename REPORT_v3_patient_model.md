@@ -86,4 +86,4 @@ GPS is now a durable-responder mixture (immune response `p_resp`, durable fracti
 | L2 no interim term | 58.8 / 74.0 / 77.5 | 34% (20.3) | 47% (30.2) | 0.66 | 42% |
 | L3 tolerance 0.5 events | 59.4 / 73.6 / 77.0 | 33% (19.5) | 49% (33.1) | 0.64 | 48% |
 
-The posterior moves GPS toward a large durable component: responders 77%, durable among responders 82% (about 63% of GPS patients), onset about 11 months (median `exp(2.44)`). Both arms keep tails (BAT 3→5-yr OS 34→23%, GPS 47→39%). BAT 3-yr OS stays near 33%, above the literature range, because the counts still demand about 38% alive.
+The posterior moves GPS toward a large durable component: responders 77%, durable among responders 82% (about 63% of GPS patients), onset median about 2.4 months. Both arms keep tails (BAT 3→5-yr OS 34→23%, GPS 47→39%). BAT 3-yr OS stays near 33%, above the literature range, because the counts still demand about 38% alive.
