@@ -1,0 +1,37 @@
+scenario,BAT prior,GPS prior,ESS,post BAT S36,post BAT median,HR final,P(success),P(IA continues) [weight]
+S0 no lag,"BAT lit (S36~18%, M~12.5)",GPS skeptical (S36 .35±.10),1118,0.258,13.4,0.635,0.498,0.637
+S0 no lag,"BAT lit (S36~18%, M~12.5)",GPS Ph2-like (.50±.10),1249,0.253,13.7,0.592,0.622,0.504
+S0 no lag,"BAT lit (S36~18%, M~12.5)",GPS strong (.60±.10),1047,0.251,13.8,0.566,0.693,0.408
+S0 no lag,"BAT lit (S36~18%, M~12.5)",GPS very strong (.70±.10),680,0.249,14.0,0.546,0.755,0.316
+S0 no lag,"BAT wide (S36~25%, M~14)",GPS skeptical (S36 .35±.10),2559,0.290,14.7,0.676,0.391,0.759
+S0 no lag,"BAT wide (S36~25%, M~14)",GPS Ph2-like (.50±.10),3155,0.286,15.0,0.630,0.510,0.648
+S0 no lag,"BAT wide (S36~25%, M~14)",GPS strong (.60±.10),2555,0.283,15.1,0.603,0.587,0.562
+S0 no lag,"BAT wide (S36~25%, M~14)",GPS very strong (.70±.10),1532,0.280,15.3,0.578,0.658,0.470
+S0 no lag,BAT flat,GPS skeptical (S36 .35±.10),3640,0.316,15.3,0.724,0.301,0.828
+S0 no lag,BAT flat,GPS Ph2-like (.50±.10),4761,0.314,15.7,0.672,0.411,0.732
+S0 no lag,BAT flat,GPS strong (.60±.10),3913,0.310,16.0,0.639,0.487,0.649
+S0 no lag,BAT flat,GPS very strong (.70±.10),2424,0.307,16.2,0.610,0.563,0.554
+S3 protocol + real-world (50%),"BAT lit (S36~18%, M~12.5)",GPS skeptical (S36 .35±.10),1392,0.251,13.1,0.636,0.507,0.666
+S3 protocol + real-world (50%),"BAT lit (S36~18%, M~12.5)",GPS Ph2-like (.50±.10),1630,0.248,13.3,0.594,0.634,0.534
+S3 protocol + real-world (50%),"BAT lit (S36~18%, M~12.5)",GPS strong (.60±.10),1317,0.246,13.4,0.575,0.705,0.440
+S3 protocol + real-world (50%),"BAT lit (S36~18%, M~12.5)",GPS very strong (.70±.10),841,0.246,13.5,0.558,0.766,0.347
+S3 protocol + real-world (50%),"BAT wide (S36~25%, M~14)",GPS skeptical (S36 .35±.10),2841,0.281,14.2,0.680,0.387,0.777
+S3 protocol + real-world (50%),"BAT wide (S36~25%, M~14)",GPS Ph2-like (.50±.10),3475,0.279,14.4,0.632,0.513,0.670
+S3 protocol + real-world (50%),"BAT wide (S36~25%, M~14)",GPS strong (.60±.10),2769,0.277,14.6,0.604,0.595,0.587
+S3 protocol + real-world (50%),"BAT wide (S36~25%, M~14)",GPS very strong (.70±.10),1671,0.276,14.8,0.582,0.669,0.498
+S3 protocol + real-world (50%),BAT flat,GPS skeptical (S36 .35±.10),4202,0.308,14.5,0.726,0.294,0.836
+S3 protocol + real-world (50%),BAT flat,GPS Ph2-like (.50±.10),5401,0.307,15.0,0.677,0.402,0.745
+S3 protocol + real-world (50%),BAT flat,GPS strong (.60±.10),4335,0.305,15.3,0.645,0.481,0.668
+S3 protocol + real-world (50%),BAT flat,GPS very strong (.70±.10),2485,0.303,15.6,0.612,0.562,0.580
+S6 S3 + 10% BAT silent deaths,"BAT lit (S36~18%, M~12.5)",GPS skeptical (S36 .35±.10),1712,0.236,13.1,0.648,0.469,0.684
+S6 S3 + 10% BAT silent deaths,"BAT lit (S36~18%, M~12.5)",GPS Ph2-like (.50±.10),2084,0.233,13.3,0.606,0.584,0.557
+S6 S3 + 10% BAT silent deaths,"BAT lit (S36~18%, M~12.5)",GPS strong (.60±.10),1714,0.232,13.4,0.586,0.655,0.468
+S6 S3 + 10% BAT silent deaths,"BAT lit (S36~18%, M~12.5)",GPS very strong (.70±.10),1081,0.230,13.5,0.566,0.720,0.377
+S6 S3 + 10% BAT silent deaths,"BAT wide (S36~25%, M~14)",GPS skeptical (S36 .35±.10),3201,0.268,14.3,0.697,0.355,0.791
+S6 S3 + 10% BAT silent deaths,"BAT wide (S36~25%, M~14)",GPS Ph2-like (.50±.10),3879,0.266,14.5,0.650,0.467,0.692
+S6 S3 + 10% BAT silent deaths,"BAT wide (S36~25%, M~14)",GPS strong (.60±.10),3124,0.264,14.6,0.622,0.541,0.614
+S6 S3 + 10% BAT silent deaths,"BAT wide (S36~25%, M~14)",GPS very strong (.70±.10),1958,0.262,14.8,0.599,0.611,0.526
+S6 S3 + 10% BAT silent deaths,BAT flat,GPS skeptical (S36 .35±.10),4420,0.294,14.5,0.740,0.279,0.833
+S6 S3 + 10% BAT silent deaths,BAT flat,GPS Ph2-like (.50±.10),5557,0.293,14.8,0.686,0.379,0.741
+S6 S3 + 10% BAT silent deaths,BAT flat,GPS strong (.60±.10),4459,0.290,15.1,0.655,0.451,0.664
+S6 S3 + 10% BAT silent deaths,BAT flat,GPS very strong (.70±.10),2714,0.287,15.4,0.629,0.525,0.573

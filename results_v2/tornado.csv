@@ -1,0 +1,19 @@
+choice,P_success,group
+BASELINE V3 lit BAT,0.564,
+IA: Stochasty: GPS IA deaths < BAT,0.791,IDMC interim treatment
+IA: none (ignore IDMC),0.763,IDMC interim treatment
+IA: Thetamancer: IA HR .50-.90 & BAT>=32/60,0.73,IDMC interim treatment
+GPS 3-yr OS prior 0.65±0.10,0.712,GPS prior
+IA: futility pass: IA HR<=1 & no stop,0.621,IDMC interim treatment
+add 13.5-mo median follow-up target,0.602,calibration
+GPS non-responders not worse than BAT (theta<=1),0.6,GPS structure
+reporting: calls quarterly to wk91 then yearly,0.575,reporting / censoring
+withdrawal: symmetric 3%/yr,0.575,reporting / censoring
+reporting: no real-world discovery,0.565,reporting / censoring
+reporting: quarterly throughout,0.563,reporting / censoring
+"withdrawal: BAT 6%/yr, GPS 2%/yr",0.556,reporting / censoring
+analysis on reported-only snapshot,0.533,reporting / censoring
+two-stage (RFS + post-relapse) structure,0.528,GPS structure
+withdrawal 6/2% + 10% BAT silent deaths,0.507,reporting / censoring
+GPS 3-yr OS prior 0.35±0.10,0.451,GPS prior
+BAT prior flat (no literature),0.321,BAT prior
