@@ -12,6 +12,7 @@ Focus: how death-reporting lag affects the BAT arm, and a literature-informed es
 | `smc_fit.py`, `smc_report.py` | SMC for the one-stage model |
 | `synth_lik.py`, `synth_analyze.py`, `fit_peak*.py`, `refine.py` | synthetic-likelihood and peak-matching experiments |
 | `vdm_bridge.py` | converts van der Maas (from-relapse) survival to REGAL's from-randomisation clock |
+| `INPUTS.md` | every Monte Carlo parameter, prior, per-patient input and the Gaussian reporting-lag design |
 | `REPORT.md`, `REPORT_v2_community_model_choices.md`, `REPORT_v3_patient_model.md` | write-ups (v3 = patient-level model, soft interim likelihood, science-based priors) |
 | `results*/` | tables and figures (large pickles are git-ignored; rerun scripts to regenerate) |
 

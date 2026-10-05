@@ -22,7 +22,5 @@ lth_r,"log relapse HR, GPS responders after onset","0.384 [0.15, 0.829]","0.204 
 th_nr,"relapse HR, GPS non-responders vs observation","1 [0.782, 1.24]","0.988 [0.765, 1.2]","0.985 [0.77, 1.21]",-0.11
 lL,log onset delay (median mo = exp),"2.99 [1.84, 4.79]","2.71 [1.79, 4.26]","2.69 [1.73, 4.18]",-0.34
 gamma,enrollment shape,"2.1 [1.47, 2.73]","1.62 [1.41, 2.35]","1.61 [1.41, 2.34]",-1.24
-delta,data-pull lag on 72 count (mo),"0.609 [0.0416, 2.03]","1.42 [0.274, 2.3]","1.43 [0.284, 2.3]",1.35
-q_rw,real-world death discovery prob,"0.497 [0.171, 0.828]","0.534 [0.188, 0.843]","0.523 [0.176, 0.835]",0.19
-z_b,interim efficacy z bound,"2.42 [2.24, 2.65]","2.43 [2.24, 2.68]","2.42 [2.25, 2.68]",0.07
-h_f,interim futility HR bound,"0.829 [0.749, 0.91]","0.836 [0.754, 0.912]","0.852 [0.765, 0.915]",0.13
+z_b,interim efficacy z bound,"2.42 [2.23, 2.65]","1.42 [0.274, 2.3]","1.43 [0.284, 2.3]",-7.79
+h_f,interim futility HR bound,"0.827 [0.75, 0.91]","0.534 [0.188, 0.843]","0.523 [0.176, 0.835]",-6.02

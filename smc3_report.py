@@ -11,8 +11,7 @@ disp = {"Mr": "median relapse-free time, reference pt (mo)", "kr": "relapse haza
         "b_mrd": "log HR MRD+", "b_age": "log HR per 10 y age", "sig_f": "frailty SD", "p_long": "share long CR1", "p_poor": "share poor cytogenetics", "p_mrd": "share MRD+",
         "u_mean": "CR2->randomisation delay (mo)", "m_p": "post-relapse median (mo)", "b_prage": "log HR post-relapse per 10 y", "m_bg": "background mortality multiplier", "p_sct": "transplant fraction (ITT)",
         "p_act": "BAT on active therapy", "th_B": "relapse HR, BAT active vs observation", "p_resp": "GPS immune-responder fraction", "lth_r": "log relapse HR, GPS responders after onset",
-        "th_nr": "relapse HR, GPS non-responders vs observation", "lL": "log onset delay (median mo = exp)", "gamma": "enrollment shape", "delta": "data-pull lag on 72 count (mo)",
-        "q_rw": "real-world death discovery prob", "z_b": "interim efficacy z bound", "h_f": "interim futility HR bound"}
+        "th_nr": "relapse HR, GPS non-responders vs observation", "lL": "log onset delay (median mo = exp)", "gamma": "enrollment shape", "z_b": "interim efficacy z bound", "h_f": "interim futility HR bound"}
 
 def trial_weights(rel, sigma=2.0):
     C = rel["C"]; kern = np.exp(-0.5 * (((C - OBS[None]) / sigma) ** 2).sum(1)); return kern, kern * rel["ia_cont"]

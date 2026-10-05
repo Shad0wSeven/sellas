@@ -85,7 +85,7 @@ def realised(X, R2=100, nsel=800, seed=99):
         S = pm.sim_block(xb, Z)
         flat = lambda a: a.reshape(nb * R2, pm.N)
         a, arm, T, d, arrive = flat(S["a"]), flat(S["arm"]).astype(np.int8), flat(S["T"]), flat(S["d"]), flat(S["arrive"])
-        dl = np.repeat(xb[:, IDX["delta"]], R2)
+        dl = np.zeros(nb * R2)
         C = np.stack([(arrive <= r.D["e60"]).sum(1), (arrive <= (r.D["e72"] - dl)[:, None]).sum(1), (arrive <= r.D["e78"]).sum(1)], 1)
         T80 = np.partition(arrive, 79, axis=1)[:, 79]; cut = np.minimum(T80, r.m(dt.date(2030, 1, 1)))
         gap = np.random.default_rng(s).random(a.shape) * flat(S["interval"]); W = np.full(a.shape, np.inf)

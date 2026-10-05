@@ -40,8 +40,11 @@ PARAMS = [
     ("z_b", 2.2, 3.0, "n", 2.4, 0.15), ("h_f", 0.74, 0.92, "u", 0, 0),
 ]
 import os, json
+LAG = dict(mu_bat=0.0, sd_bat=0.0, mu_gps=0.0, sd_gps=0.0)       # reporting lag in DAYS added to the biological death date: N(mu, sd), clipped at 0
+LAG.update(json.loads(os.environ.get("PM_LAG", "{}")))
 _ov = json.loads(os.environ.get("PM_OVERRIDE", "{}"))           # e.g. {"lth_r": [-1.9, 0.6]} overrides prior (a, b) for sensitivity runs
 PARAMS = [(n, lo, hi, k, *_ov.get(n, (a, b))) for (n, lo, hi, k, a, b) in PARAMS]
+PARAMS = [p for p in PARAMS if p[0] not in ("q_rw", "delta")]      # no reporting nuisance parameters: lag is an explicit input (LAG)
 NAMES = [p[0] for p in PARAMS]; IDX = {n: i for i, n in enumerate(NAMES)}; D = len(PARAMS)
 LO = np.array([p[1] for p in PARAMS]); HI = np.array([p[2] for p in PARAMS])
 KIND = [p[3] for p in PARAMS]; PA = np.array([p[4] for p in PARAMS], float); PB = np.array([p[5] for p in PARAMS], float)
@@ -137,21 +140,17 @@ def sim_block(X, Z):
     on_visits = (died_rem & ~sct_done) | False          # death while still in remission and not transplanted
     a = np.clip(enroll_base(X[:, IDX["gamma"]])[:, None, :] + ex("jit"), 0, r.D["apr24"])
     d = a + T
-    # reporting
-    pipe = np.exp(np.log(0.75) + 0.6 * ex("pipe"))
+    # reporting: biological death date + Gaussian lag (days), separate mean/sd for BAT and GPS
+    lag_days = np.where(arm, LAG["mu_gps"] + LAG["sd_gps"] * ex("pipe"), LAG["mu_bat"] + LAG["sd_bat"] * ex("pipe"))
+    arrive = d + np.maximum(lag_days, 0.0) / 30.4375
     interval = np.where(T < 36, 3.0, 12.0)
-    disc = ex("u_disc") * interval
-    p_imm = np.where(T < 12, np.where(arm, 1.0, np.where(active, 0.7, P["q_rw"])),
-                     np.where(arm & on_visits, 0.95, np.where(active & on_visits, 0.7, P["q_rw"])))
-    disc = np.where(ex("u_imm") < p_imm, 0.0, disc)
-    arrive = d + pipe + disc
     return dict(a=a, arm=arm, T=T, d=d, arrive=arrive, relapsed=relapsed_by_death, resp=resp, active=active, sct=sct_done, age=np.broadcast_to(age, T.shape), long=np.broadcast_to(long_, T.shape), interval=interval, u=u, R=R_)
 
 
 def summarize_block(X, Z):
     """expected counts, P_stall, fu median, P_cont (soft interim), valid"""
     s = sim_block(X, Z); nb = len(X); R = Z["R"]
-    dl = X[:, IDX["delta"]]
+    dl = np.zeros(nb)
     dates = np.stack([np.full(nb, r.D["e60"]), r.D["e72"] - dl, np.full(nb, r.D["e78"])], 1)
     mu = np.stack([(s["arrive"] <= dates[:, i][:, None, None]).sum(-1).mean(-1) for i in range(3)], 1)
     pst = ((s["arrive"] <= r.D["q2"]).sum(-1) <= 79).mean(-1)
