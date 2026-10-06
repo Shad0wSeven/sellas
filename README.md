@@ -12,6 +12,7 @@ Focus: how death-reporting lag affects the BAT arm, and a literature-informed es
 | `smc_fit.py`, `smc_report.py` | SMC for the one-stage model |
 | `synth_lik.py`, `synth_analyze.py`, `fit_peak*.py`, `refine.py` | synthetic-likelihood and peak-matching experiments |
 | `vdm_bridge.py` | converts van der Maas (from-relapse) survival to REGAL's from-randomisation clock |
+| `regal_bio.py`, `bio_*.py`, `rand_check.py`, `BIO_MODEL.md`, `REPORT_v7_biology_pinned_two_knobs.md` | **biology-pinned model**: protocol-faithful stratified randomisation and Cox analysis, fixed biological parameters from papers, two knobs (`bat_eff`, `gps_eff`) |
 | `MODEL_EXPLAINED.md` | plain-language explanation of the full model, likelihood and comparison with other models |
 | `INPUTS.md` | every Monte Carlo parameter, prior, per-patient input and the Gaussian reporting-lag design |
 | `REPORT_v5_why_P_success_is_lower.md`, `REPORT_v6_bat_anchored_gps_flexible.md` | diagnosis of the lower P(success); BAT-anchored / GPS-flexible inference (`PM_PIN`) |
