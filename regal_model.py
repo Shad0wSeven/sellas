@@ -79,14 +79,33 @@ SCENARIOS = {
 
 
 # ---------------------------------------------------------------- simulation
-def enroll(n, gamma, rng):
+def enroll(n, gamma, rng, enrollment=None):
     j = np.arange(1, N + 1)[None, :]
     a = np.empty((n, N))
-    u = (j[:, :105] - 1) / 104.0
-    a[:, :105] = D["nov23"] * u ** (1.0 / gamma[:, None])
-    a[:, 105:123] = D["nov23"] + (j[:, 105:123] - 105 - 0.5) / 18 * (D["mar24"] - D["nov23"])
-    a[:, 123:] = D["mar24"] + (j[:, 123:] - 123 - 0.5) / 4 * (D["apr24"] - D["mar24"])
-    a += rng.normal(0, 0.15, a.shape)
+    if enrollment and enrollment.get("family", "logistic") == "logistic":
+        # Confident-Web-style two-phase accrual: fit a truncated logistic CDF
+        # to the first 105 patients, then model the China-shortfall backfill
+        # separately. Midpoint is trial-months from T0; steepness is per month.
+        midpoint = float(enrollment.get("midpoint", 31.0))
+        steepness = float(enrollment.get("steepness", 0.22))
+        if steepness <= 0:
+            raise ValueError("Enrollment logistic steepness must be positive")
+        lo = 1.0 / (1.0 + np.exp(np.clip(steepness * midpoint, -700, 700)))
+        hi = 1.0 / (1.0 + np.exp(np.clip(-steepness * (D["nov23"] - midpoint), -700, 700)))
+        q = lo + rng.random((n, 105)) * (hi - lo)
+        a[:, :105] = midpoint + (np.log(q) - np.log1p(-q)) / steepness
+        a[:, :105].sort(axis=1)
+        # Publicly described as a distinct catch-up phase after 105 ex-China;
+        # exact patient-level dates are not disclosed.
+        a[:, 105:] = D["nov23"] + rng.random((n, N - 105)) * (D["apr24"] - D["nov23"])
+        a[:, 105:].sort(axis=1)
+    else:
+        # Legacy power curve retained for previous analyses.
+        u = (j[:, :105] - 1) / 104.0
+        a[:, :105] = D["nov23"] * u ** (1.0 / gamma[:, None])
+        a[:, 105:123] = D["nov23"] + (j[:, 105:123] - 105 - 0.5) / 18 * (D["mar24"] - D["nov23"])
+        a[:, 123:] = D["mar24"] + (j[:, 123:] - 123 - 0.5) / 4 * (D["apr24"] - D["mar24"])
+        a += rng.normal(0, 0.15, a.shape)
     a = np.clip(a, 0, D["apr24"])
     arm = (np.argsort(rng.random((n, N)), axis=1) >= N_BAT).astype(np.int8)  # 0 BAT, 1 GPS
     return a, arm
@@ -117,7 +136,7 @@ def _sim_chunk(n, rng, scen, prior):
     k = np.where(valid, k, 1.0)
     p["k"] = k
     M, kk = p["M"][:, None], k[:, None]
-    a, arm = enroll(n, p["gamma"], rng)
+    a, arm = enroll(n, p["gamma"], rng, enrollment=scen.get("enrollment"))
 
     Hl = np.log(2) * (p["L"][:, None] / M) ** kk
     E = rng.exponential(1.0, (n, N))
@@ -135,7 +154,10 @@ def _sim_chunk(n, rng, scen, prior):
 
     # ---- reporting delay
     if scen["lag"]:
-        P = np.exp(np.log(scen["pipe_med"]) + 0.6 * rng.standard_normal((n, N)))
+        med_bat = scen.get("pipe_med_bat", scen["pipe_med"])
+        med_gps = scen.get("pipe_med_gps", scen["pipe_med"])
+        med_by_arm = np.where(arm == 1, med_gps, med_bat)
+        P = np.exp(np.log(med_by_arm) + 0.6 * rng.standard_normal((n, N)))
         if scen["calls"]:
             interval = np.where(T < 36, 3.0, 12.0)
             disc = rng.random((n, N)) * interval

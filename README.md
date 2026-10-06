@@ -14,6 +14,7 @@ Focus: how death-reporting lag affects the BAT arm, and a literature-informed es
 | `vdm_bridge.py` | converts van der Maas (from-relapse) survival to REGAL's from-randomisation clock |
 | `regal_bio.py`, `bio_*.py`, `rand_check.py`, `BIO_MODEL.md`, `REPORT_v7_biology_pinned_two_knobs.md` | **biology-pinned model**: protocol-faithful stratified randomisation and Cox analysis, fixed biological parameters from papers, two knobs (`bat_eff`, `gps_eff`) |
 | `smc_bio.py`, `sb_report.py`, `REPORT_v8_flexible_gps_curve.md` | **current main model**: flexible mixture-cure GPS curve (cure fraction, partial benefit, residual hazard, onset), literature-grounded BAT with van der Maas outcome data, likelihood-calibrated |
+| `bat_sweep.py`, `BAT_MODEL.md` | direct BAT overall-survival Weibull sweep over median OS × 3-year OS and explicit truncated-logistic enrollment midpoint/steepness; evidence audit for age, treatment mix, and transplant escape |
 | `MODEL_EXPLAINED.md` | plain-language explanation of the full model, likelihood and comparison with other models |
 | `INPUTS.md` | every Monte Carlo parameter, prior, per-patient input and the Gaussian reporting-lag design |
 | `REPORT_v5_why_P_success_is_lower.md`, `REPORT_v6_bat_anchored_gps_flexible.md` | diagnosis of the lower P(success); BAT-anchored / GPS-flexible inference (`PM_PIN`) |
