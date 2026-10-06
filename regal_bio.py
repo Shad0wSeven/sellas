@@ -93,9 +93,12 @@ def cohort(Z, bio):
 
 
 # ---------------------------------------------------------------- simulation
-def simulate(th_B, c_G, Z, bio, coh=None, a_dates=None):
+def simulate(th_B, c_G, Z, bio, coh=None, a_dates=None, extra=None):
     """th_B, c_G: arrays (nk,). returns dict of (nk,R,N) arrays."""
     th_B = np.atleast_1d(np.asarray(th_B, float))[:, None, None]; c_G = np.atleast_1d(np.asarray(c_G, float))[:, None, None]
+    ext = extra or {}
+    g3 = lambda k, default: np.atleast_1d(np.asarray(ext.get(k, default), float))[:, None, None] if k in ext else default       # per-cell arrays or scalar default
+    th_nc = g3("th_nc", 1.0); th_d = g3("th_d", bio["th_dur"]); onset = g3("onset_med", bio["onset_med"]); lam_b = g3("lam_b", 1.0); m_p = g3("m_p", bio["m_p"])
     coh = coh or cohort(Z, bio)
     ex = lambda x: x[None]
     arm = ex(coh["arm"]); age = ex(coh["age"])
@@ -108,19 +111,20 @@ def simulate(th_B, c_G, Z, bio, coh=None, a_dates=None):
                    + np.log(bio["hr_mrd"]) * (coh["mrd"] - bio["p_mrd"]) + np.log(bio["hr_crp"]) * (coh["crp"] - bio["p_crp"])
                    + np.log(bio["hr_age10"]) * (coh["age"] - 66) / 10 + bio["sigma_f"] * Z["z_f"])
     active = (~arm) & ex(Z["u_act"] < bio["p_act"])
-    mult = ex(mult0) * np.where(active, th_B, 1.0)
+    mult = ex(mult0) * np.where(active, th_B, 1.0) * lam_b
     dur = arm & (ex(Z["u_dur"]) < c_G)
     E_tot = mult * H0(u) + ex(Z["E_rel"])
-    b = u + bio["onset_med"] * np.exp(bio["onset_sd"] * ex(Z["z_L"]))
+    b = u + onset * np.exp(bio["onset_sd"] * ex(Z["z_L"]))
     Hb = H0(b)
     t_plain = H0inv(E_tot / mult)
-    t_dur = np.where(E_tot / mult < Hb, t_plain, H0inv(Hb + (E_tot / mult - Hb) / bio["th_dur"]))
-    t_cr2 = np.where(dur, t_dur, t_plain)
+    th_r = np.where(dur, th_d, th_nc)                                                  # GPS effect after onset: durable -> th_d, otherwise partial -> th_nc
+    t_gps = np.where(E_tot / mult < Hb, t_plain, H0inv(Hb + (E_tot / mult - Hb) / th_r))
+    t_cr2 = np.where(arm, t_gps, t_plain)
     t_cr2 = np.where(ex(Z["u_cure"]) < bio["c_b"], np.inf, t_cr2)
     R_ = t_cr2 - u
     h_rem = bio["h65"] * np.exp(bio["gomp"] * (age - 65)) * bio["m_bg"]
     D_rem = ex(Z["E_rem"]) / h_rem
-    P_post = ex(Z["E_pr"]) * (bio["m_p"] / LN2) / np.exp(np.log(bio["hr_pr_age10"]) * (age - 66) / 10)
+    P_post = ex(Z["E_pr"]) * (m_p / LN2) / np.exp(np.log(bio["hr_pr_age10"]) * (age - 66) / 10)
     died_rem = D_rem < R_
     T_nt = np.where(died_rem, D_rem, R_ + P_post)
     sct = ex(Z["u_sct"] < bio["p_sct"]); t_sct = ex(Z["E_tsct"]) * bio["t_sct"]
